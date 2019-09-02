@@ -1,0 +1,105 @@
+
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# An example controller showing a sample home page
+GET     /                           controllers.HomeController.index
+
+
+# currencies routes
+GET    /currencies/getListFromDB                                                        controllers.CurrenciesController.getListFromDB
+#getListFromDB  executed automatically from application timer and or manually
+GET    /currencies/getcurrencies                                                        controllers.CurrenciesController.getCurrencies
+    # get json of currencies returns currencies in memory of the model
+GET    /currencies/getcurrencybase                                                      controllers.CurrenciesController.getCurrencyBase
+    # get json of currency Code returns currency base from the model
+GET    /currencies/getcurrencybycode/:code                                              controllers.CurrenciesController.getCurrencyByCode(code:String)
+    # get default currency returns currency data by currency code
+GET    /currencies/setCurrencyBaseByCode/:code                                          controllers.CurrenciesController.setCurrencyBaseByCode(code:String)
+    # set default currency by code  set as base by currency code for the system * and api of client not for the ratesFetcher
+GET    /currencies/addcurrency/:currencyCode/:currencyName/:currencyDecimal/:isBase     controllers.CurrenciesController.addCurrency(currencyCode:String,currencyName:String,currencyDecimal:Int,isBase:Boolean)
+    # insertion of a new currency inserts new currency in the model not in db to be done
+#end of currencies routes
+
+#dbConnectionString routes
+GET   /db/setsetDbConString                                                             controllers.DbConnectionController.setDbConString(providerCode:String,datasourceClass:String,dirver:String,url:String)
+#  def setDbConString (providerCode:String,datasourceClass:String,dirver:String,url:String):Boolean
+# sets configuration stings for the db usually form this system should be in configurations but from othe management sytems use API
+GET   /db/getProviderBaseCurr                                                           controllers.DbConnectionController.getProviderBaseCurr
+#  def getProviderBaseCurr():  String    returns the base currency used from the provider
+GET   /db/getProviderCurrencies                                                         controllers.DbConnectionController.getProviderCurrencies
+#  def getProviderCurrencies() : List[Currency]  returns list of currencies offered by the provider
+# from code momentarely should be from db read
+GET   /db/getProviderURL                                                                controllers.DbConnectionController.getProviderURL
+#  def getProviderURL : String
+#  returns the url of the provider (from code momentarely ) should be from db read and with other params as key of authorisation
+GET   /db/getProviderTimeout                                                            controllers.DbConnectionController.getProviderTimeout
+#  def getProviderTimeout : Int
+# returns the timeout of the provider
+GET   /db/getOtherRatesNotProvided                                                      controllers.DbConnectionController.getOtherRatesNotProvided
+#  def getOtherRatesNotProvided:List[Rate]  return from db the currencies not offered from the provider
+#end dbConnectionString routes
+
+
+# rates routes
+GET /rates/generateCombinations                                                  controllers.RatesController.generateCombinations
+# def generateCombinations:Boolean gets the currencies from the currency controller and tests the generation of combinations
+GET /rates/GetRates                                                              controllers.RatesController.GetRates
+#  def GetRates : List[Rate]  //returns the test of generate
+GET /rates/GetRatesOfCurrency/:Code                                              controllers.RatesController.GetRatesOfCurrency(Code:String)
+#  def GetRatesOfCurrency (codeFrom: String): List[Rate]  //returns filtering from generate
+GET /rates/GetRatesOfCurrencies/:codeFrom/:codeTo                                controllers.RatesController.GetRatesOfCurrencies(codeFrom:String,codeTo:String)
+ # def GetRatesOfCurrencies(codeFrom: String, codeTo: String) : Option[Rate] ///returns specific from generate
+GET /rates/AddRate/:codeFrom/:codeTo/:rate                                       controllers.RatesController.AddRate(codeFrom:String,codeTo:String,rate:Double)
+#  def AddRate (codeFrom: String, codeTo: String, rate: Double): Boolean  // add another rate from api to model
+#end of rates routes
+
+
+#ratesfetcher routes
+GET /featcher/start                                                               controllers.RatesFeatcherController.functionToCall()
+  #def functionToCall : Boolean
+# function used for starting the async process of fetch data from provider
+GET /featcher/checkReturn                                                         controllers.RatesFeatcherController.InterpretList()
+  #def InterpretList() : List[(String, Double)]
+#function to test the return of the provider if has return or what return it has
+GET /featcher/checkInterpretation                                                 controllers.RatesFeatcherController.InterpretListCheck()
+  #def InterpretListCheck(): String
+# checkes if the return could be parsed to model if enpty list than failed
+#end of ratesfetcher routes
+
+#rates calculator routes
+GET /calculator/getdata                                                           controllers.RatesCalculatorController.getData()
+ # def getData():Boolean   tryes to get data from the interpretation of featcher and set is to liss in combination with the provider base
+GET /calculator/getNotProvidedFromDB                                              controllers.RatesCalculatorController.getNotProvidedFromDB()
+#getNotProvidedFromDB     tryes to get the rates not provided by the provider should be reading from db / sample in code
+GET /calculator/combine                                                           controllers.RatesCalculatorController.combine()
+ # def combine():Boolean    combines and calculates all rates for the combinations between currencies if  a-b = x and c-d = y than b-d = y/x
+GET /calculator/publishFetched                                                    controllers.RatesCalculatorController.publishFetched()
+ # def publishFetched():List[Rate]  returns the fetched rates from the fetcher model
+GET /calculator/publishCombinations                                               controllers.RatesCalculatorController.publishCombinations()
+ # def publishCombinations():List[Rate]  returns the combinations calculated from the combine method
+GET /calculator/publishNotProvided                                                controllers.RatesCalculatorController.publishNotProvided()
+#publishNotProvided   returns the rates not offered from the provider but form db
+#end of ratescalculator routes
+
+
+
+#ProcessController routes
+    GET /processes                                   controllers.ProcessController.execStatus
+#monitors the processes executing
+#end of ProcessController
+
+#clientAPI Controller Routes
+GET /api/latestValues                                       controllers.APIController.latestValues
+ #def latestValues():List[Rate]
+#returns to the client the lates with the system base currency if not with EUR def currency
+GET /api/latestWithBase/:currCode                           controllers.APIController.latestWithBase(currCode: String)
+  #def latestWithBase(currCode: String):List[Rate]
+# returns to teh client the rates with a specific base offered by the client
+GET /api/latestForCouple/:currCodeFrom/:currCodeTo          controllers.APIController.latestForCouple(currCodeFrom:String, currCodeTo:String)
+  #def LatestForCouple(currCodeFrom:String, currCodeTo:String):Option[Rate]
+GET /api/SetRatesFromCalculator                                 controllers.APIController.SetRatesFromCalculator
+
+#returns the specific rate of two currencies specified.
+#end of routes
